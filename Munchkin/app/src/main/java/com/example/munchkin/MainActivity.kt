@@ -160,7 +160,7 @@ fun JogadorUI(jogador: Jogador, onJogadorChange: (Jogador) -> Unit) {
         Button(onClick = {
             // Atualiza permanentemente o nome do jogador
             onJogadorChange(jogador.copy(nome = nomeTemp))
-            Toast.makeText(context, "Nome atualizado!!", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Nome atualizado!!", Toast.LENGTH_SHORT).show()
         }) {
             Text(text = "Atualizar nome")
         }
