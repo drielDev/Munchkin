@@ -20,7 +20,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -35,9 +34,14 @@ class MainActivity : ComponentActivity() {
 
             // Estado compartilhado dos jogadores
             var jogadores by remember {
-                mutableStateOf(
-                    List(6) { index -> Jogador(nome = "Jogador ${index + 1}", level = 1, equipamento = 0, modificador = 0) }
-                )
+                mutableStateOf(List(6) { index ->
+                    Jogador(
+                        nome = "Jogador ${index + 1}",
+                        level = 1,
+                        equipamento = 0,
+                        modificador = 0
+                    )
+                })
             }
 
             NavHost(navController = navController, startDestination = "listaJogadores") {
@@ -45,30 +49,25 @@ class MainActivity : ComponentActivity() {
                     MainScreen(navController = navController, jogadores = jogadores)
                 }
                 composable("jogador/{jogadorIndex}") { backStackEntry ->
-                    val jogadorIndex = backStackEntry.arguments?.getString("jogadorIndex")?.toInt() ?: 0
-                    JogadorScreen(
-                        jogadorIndex = jogadorIndex,
+                    val jogadorIndex =
+                        backStackEntry.arguments?.getString("jogadorIndex")?.toInt() ?: 0
+                    JogadorScreen(jogadorIndex = jogadorIndex,
                         navController = navController,
                         jogadores = jogadores,
                         onJogadorChange = { index, jogadorAtualizado ->
                             jogadores = jogadores.toMutableList().apply {
                                 set(index, jogadorAtualizado)
                             }
-                        }
-                    )
+                        })
                 }
             }
         }
     }
 }
 
-
-
-
 @Composable
 fun MainScreen(
-    navController: NavController,
-    jogadores: List<Jogador>
+    navController: NavController, jogadores: List<Jogador>
 ) {
     Column {
         jogadores.forEachIndexed { index, jogador ->
@@ -85,7 +84,12 @@ fun MainScreen(
 
 
 @Composable
-fun JogadorScreen(jogadorIndex: Int, navController: NavController, jogadores: List<Jogador>, onJogadorChange: (Int, Jogador) -> Unit) {
+fun JogadorScreen(
+    jogadorIndex: Int,
+    navController: NavController,
+    jogadores: List<Jogador>,
+    onJogadorChange: (Int, Jogador) -> Unit
+) {
     val context = LocalContext.current
 
     // Pegando o jogador atual pelo índice
@@ -107,9 +111,13 @@ fun JogadorScreen(jogadorIndex: Int, navController: NavController, jogadores: Li
         Button(onClick = {
             val resultado = lutar(jogador, monstro)
             if (resultado) {
-                Toast.makeText(context, "Vitória! Você derrotou o ${monstro.nome}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context, "Vitória! Você derrotou o ${monstro.nome}", Toast.LENGTH_SHORT
+                ).show()
             } else {
-                Toast.makeText(context, "Derrota! O ${monstro.nome} foi mais forte.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context, "Derrota! O ${monstro.nome} foi mais forte.", Toast.LENGTH_SHORT
+                ).show()
             }
         }) {
             Text("Lutar contra o Monstro")
@@ -131,17 +139,12 @@ fun JogadorUI(jogador: Jogador, onJogadorChange: (Jogador) -> Unit) {
     val context = LocalContext.current
 
     Column(
-        modifier = Modifier.padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Campo de texto para editar o nome
-        TextField(
-            value = nomeTemp,
-            onValueChange = { novoNome ->
-                nomeTemp = novoNome  // Atualiza o nome temporariamente enquanto o usuário digita
-            },
-            label = { Text("Nome do Jogador") }
-        )
+        TextField(value = nomeTemp, onValueChange = { novoNome ->
+            nomeTemp = novoNome  // Atualiza o nome temporariamente enquanto o usuário digita
+        }, label = { Text("Nome do Jogador") })
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -185,7 +188,10 @@ fun JogadorUI(jogador: Jogador, onJogadorChange: (Jogador) -> Unit) {
             }) {
                 Text("-")
             }
-            Text(text = "Bônus de Equipamento: ${jogador.equipamento}", modifier = Modifier.padding(horizontal = 8.dp))
+            Text(
+                text = "Bônus de Equipamento: ${jogador.equipamento}",
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
             Button(onClick = {
                 onJogadorChange(jogador.copy(equipamento = jogador.equipamento + 1))
             }) {
@@ -202,7 +208,10 @@ fun JogadorUI(jogador: Jogador, onJogadorChange: (Jogador) -> Unit) {
             }) {
                 Text("-")
             }
-            Text(text = "Modificadores: ${jogador.modificador}", modifier = Modifier.padding(horizontal = 8.dp))
+            Text(
+                text = "Modificadores: ${jogador.modificador}",
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
             Button(onClick = {
                 onJogadorChange(jogador.copy(modificador = jogador.modificador + 1))
             }) {
@@ -217,20 +226,6 @@ fun JogadorUI(jogador: Jogador, onJogadorChange: (Jogador) -> Unit) {
     }
 }
 
-
-
-
-
-
-
 fun lutar(jogador: Jogador, monstro: Monstro): Boolean {
     return jogador.poderDeAtaque() > monstro.nivel
-}
-
-
-
-@Preview(showBackground = true)
-@Composable
-fun LayoutPreview() {
-
 }
