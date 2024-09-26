@@ -1,9 +1,11 @@
 package com.example.munchkin
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,48 +23,148 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.munchkin.ui.theme.MunchkinTheme
 import org.jetbrains.annotations.Contract
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContent {
-            Main()
+            val navController = rememberNavController()
 
+            // Estado compartilhado dos jogadores
+            var jogadores by remember {
+                mutableStateOf(
+                    List(6) { index -> Jogador(nome = "Jogador ${index + 1}", level = 1, equipamento = 0, modificador = 0) }
+                )
+            }
+
+            NavHost(navController = navController, startDestination = "listaJogadores") {
+                composable("listaJogadores") {
+                    MainScreen(navController = navController, jogadores = jogadores) { index, jogadorAtualizado ->
+                        jogadores = jogadores.toMutableList().apply {
+                            set(index, jogadorAtualizado)
+                        }
+                    }
+                }
+                composable("jogador/{jogadorIndex}") { backStackEntry ->
+                    val jogadorIndex = backStackEntry.arguments?.getString("jogadorIndex")?.toInt() ?: 0
+                    JogadorScreen(
+                        jogadorIndex = jogadorIndex,
+                        navController = navController,
+                        jogadores = jogadores,
+                        onJogadorChange = { index, jogadorAtualizado ->
+                            jogadores = jogadores.toMutableList().apply {
+                                set(index, jogadorAtualizado)
+                            }
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+
+
+
+@Composable
+fun MainScreen(
+    navController: NavController,
+    jogadores: List<Jogador>,
+    onJogadorChange: (Int, Jogador) -> Unit
+) {
+    Column {
+        jogadores.forEachIndexed { index, jogador ->
+            // Botão que navega para a tela individual do jogador
+            Button(onClick = {
+                navController.navigate("jogador/$index")
+            }) {
+                Text(text = jogador.nome)  // Exibe o nome atualizado na lista
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+
+@Composable
+fun JogadorScreen(jogadorIndex: Int, navController: NavController, jogadores: List<Jogador>, onJogadorChange: (Int, Jogador) -> Unit) {
+    var context = LocalContext.current
+
+    // Pegando o jogador atual pelo índice
+    val jogador = jogadores[jogadorIndex]
+
+    Column(modifier = Modifier.padding(16.dp)) {
+        JogadorUI(jogador = jogador, onJogadorChange = { novoJogador ->
+            // Atualiza o jogador na lista ao clicar no botão "Atualizar nome"
+            onJogadorChange(jogadorIndex, novoJogador)
+        })
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Parte de Lutar contra um Monstro
+        val monstro = Monstro(nome = "Dragão", nivel = 5)
+
+        Text(text = "Monstro: ${monstro.nome} (Nível: ${monstro.nivel})")
+
+        Button(onClick = {
+            val resultado = lutar(jogador, monstro)
+            if (resultado) {
+                Toast.makeText(context, "Vitória! Você derrotou o ${monstro.nome}", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(context, "Derrota! O ${monstro.nome} foi mais forte.", Toast.LENGTH_LONG).show()
+            }
+        }) {
+            Text("Lutar contra o Monstro")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(onClick = {
+            navController.navigateUp()  // Voltar para a tela anterior
+        }) {
+            Text("Voltar")
         }
     }
 }
 
 @Composable
-fun Main() {
-
-    var jogadores by remember {
-        mutableStateOf(
-            List(6) { index -> Jogador(nome = "Jogador ${index + 1}", level = 1, equipamento = 0, modificador = 0) }
-        )
-    }
-
-    ListaJogadores(jogadores = jogadores, onJogadorChange = { index, novoJogador ->
-        jogadores = jogadores.toMutableList().apply { set(index, novoJogador) }
-    })
-
-}
-
-@Composable
 fun JogadorUI(jogador: Jogador, onJogadorChange: (Jogador) -> Unit) {
-    Column(modifier = Modifier.padding(16.dp)) {
-        // Nome do Jogador
+    var nomeTemp by remember { mutableStateOf(jogador.nome) }
+    var context = LocalContext.current
+
+    Column(
+        modifier = Modifier.padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Campo de texto para editar o nome
         TextField(
-            value = jogador.nome,
+            value = nomeTemp,
             onValueChange = { novoNome ->
-                onJogadorChange(jogador.copy(nome = novoNome))
+                nomeTemp = novoNome  // Atualiza o nome temporariamente enquanto o usuário digita
             },
             label = { Text("Nome do Jogador") }
         )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Botão para confirmar a atualização do nome
+        Button(onClick = {
+            // Atualiza permanentemente o nome do jogador
+            onJogadorChange(jogador.copy(nome = nomeTemp))
+            Toast.makeText(context, "Nome atualizado!!", Toast.LENGTH_LONG).show()
+        }) {
+            Text(text = "Atualizar nome")
+        }
+
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -77,7 +179,9 @@ fun JogadorUI(jogador: Jogador, onJogadorChange: (Jogador) -> Unit) {
             }
             Text(text = "Level: ${jogador.level}", modifier = Modifier.padding(horizontal = 8.dp))
             Button(onClick = {
-                onJogadorChange(jogador.copy(level = jogador.level + 1))
+                if (jogador.level < 10) {
+                    onJogadorChange(jogador.copy(level = jogador.level + 1))
+                }
             }) {
                 Text("+")
             }
@@ -119,14 +223,16 @@ fun JogadorUI(jogador: Jogador, onJogadorChange: (Jogador) -> Unit) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Poder Total
+        // Poder Total (Calculado dinamicamente)
         Text(text = "Poder Total: ${jogador.poderDeAtaque()}")
     }
 }
 
+
 @Composable
 fun ListaJogadores(jogadores: List<Jogador>, onJogadorChange: (Int, Jogador) -> Unit) {
-    Column {
+    Column (verticalArrangement = Arrangement.SpaceBetween,
+        horizontalAlignment = Alignment.Start){
         jogadores.forEachIndexed { index, jogador ->
             JogadorUI(jogador = jogador, onJogadorChange = { novoJogador ->
                 onJogadorChange(index, novoJogador)
@@ -138,14 +244,15 @@ fun ListaJogadores(jogadores: List<Jogador>, onJogadorChange: (Int, Jogador) -> 
 
 
 
-@Composable
+
 fun lutar(jogador: Jogador, monstro: Monstro): Boolean {
     return jogador.poderDeAtaque() > monstro.nivel
 }
 
 
+
 @Preview(showBackground = true)
 @Composable
 fun LayoutPreview() {
-    Main()
+
 }
