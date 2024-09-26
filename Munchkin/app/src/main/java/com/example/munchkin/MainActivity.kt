@@ -4,16 +4,12 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -30,8 +26,6 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.munchkin.ui.theme.MunchkinTheme
-import org.jetbrains.annotations.Contract
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,11 +42,7 @@ class MainActivity : ComponentActivity() {
 
             NavHost(navController = navController, startDestination = "listaJogadores") {
                 composable("listaJogadores") {
-                    MainScreen(navController = navController, jogadores = jogadores) { index, jogadorAtualizado ->
-                        jogadores = jogadores.toMutableList().apply {
-                            set(index, jogadorAtualizado)
-                        }
-                    }
+                    MainScreen(navController = navController, jogadores = jogadores)
                 }
                 composable("jogador/{jogadorIndex}") { backStackEntry ->
                     val jogadorIndex = backStackEntry.arguments?.getString("jogadorIndex")?.toInt() ?: 0
@@ -78,8 +68,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainScreen(
     navController: NavController,
-    jogadores: List<Jogador>,
-    onJogadorChange: (Int, Jogador) -> Unit
+    jogadores: List<Jogador>
 ) {
     Column {
         jogadores.forEachIndexed { index, jogador ->
@@ -97,7 +86,7 @@ fun MainScreen(
 
 @Composable
 fun JogadorScreen(jogadorIndex: Int, navController: NavController, jogadores: List<Jogador>, onJogadorChange: (Int, Jogador) -> Unit) {
-    var context = LocalContext.current
+    val context = LocalContext.current
 
     // Pegando o jogador atual pelo índice
     val jogador = jogadores[jogadorIndex]
@@ -118,9 +107,9 @@ fun JogadorScreen(jogadorIndex: Int, navController: NavController, jogadores: Li
         Button(onClick = {
             val resultado = lutar(jogador, monstro)
             if (resultado) {
-                Toast.makeText(context, "Vitória! Você derrotou o ${monstro.nome}", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "Vitória! Você derrotou o ${monstro.nome}", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(context, "Derrota! O ${monstro.nome} foi mais forte.", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "Derrota! O ${monstro.nome} foi mais forte.", Toast.LENGTH_SHORT).show()
             }
         }) {
             Text("Lutar contra o Monstro")
@@ -139,7 +128,7 @@ fun JogadorScreen(jogadorIndex: Int, navController: NavController, jogadores: Li
 @Composable
 fun JogadorUI(jogador: Jogador, onJogadorChange: (Jogador) -> Unit) {
     var nomeTemp by remember { mutableStateOf(jogador.nome) }
-    var context = LocalContext.current
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier.padding(16.dp),
@@ -229,18 +218,7 @@ fun JogadorUI(jogador: Jogador, onJogadorChange: (Jogador) -> Unit) {
 }
 
 
-@Composable
-fun ListaJogadores(jogadores: List<Jogador>, onJogadorChange: (Int, Jogador) -> Unit) {
-    Column (verticalArrangement = Arrangement.SpaceBetween,
-        horizontalAlignment = Alignment.Start){
-        jogadores.forEachIndexed { index, jogador ->
-            JogadorUI(jogador = jogador, onJogadorChange = { novoJogador ->
-                onJogadorChange(index, novoJogador)
-            })
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-    }
-}
+
 
 
 
